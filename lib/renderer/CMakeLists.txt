@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 project(tgui_renderer VERSION 1.2.3 LANGUAGES CXX)
 
+CPMAddPackage("gh:bkaradzic/bgfx.cmake#v1.136.9135-512")
+
 include(GNUInstallDirs)
 
 file(GLOB_RECURSE FILE_SOURCES CONFIGURE_DEPENDS
@@ -29,9 +31,18 @@ source_group(
 add_library(tgui_renderer STATIC ${FILE_SOURCES} ${HEADER_SOURCES})
 add_library(tgui::renderer ALIAS tgui_renderer)
 
-target_link_libraries(tgui_renderer PRIVATE
+target_link_libraries(tgui_renderer 
+PRIVATE
 	tgui::tgui
 	tgui::platform
+
+PUBLIC
+	bx
+	bimg
+	bimg_encode
+	bimg_decode
+
+	bgfx
 )
 
 target_include_directories(tgui_renderer
