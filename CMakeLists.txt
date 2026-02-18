@@ -11,5 +11,7 @@ if (WIN32)
     add_compile_options("/Zc:preprocessor")
 endif(WIN32)
 
+include(cmake/Dependencies.cmake)
+
 add_subdirectory(lib)
 add_subdirectory(demos)

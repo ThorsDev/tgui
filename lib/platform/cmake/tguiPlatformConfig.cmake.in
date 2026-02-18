@@ -1,0 +1,3 @@
+@PACKAGE_INIT@
+include("${CMAKE_CURRENT_LIST_DIR}/tgui_platform_targets.cmake")
+check_required_components(tgui_platform)

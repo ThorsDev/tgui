@@ -29,4 +29,5 @@ add_executable(tgui_demo_test ${FILE_SOURCES} ${HEADER_SOURCES})
 target_link_libraries(tgui_demo_test PRIVATE
 	tgui::tgui
 	tgui::renderer
+	tgui::platform
 )
