@@ -1,0 +1,39 @@
+{
+	"version": 4,
+	"cmakeMinimumRequired": { "major": 3, "minor": 23 },
+	"configurePresets": [
+		{
+			"name": "base",
+			"hidden": true,
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+				"CMAKE_POLICY_VERSION_MINIMUM" : "3.20"
+			}
+		},
+
+
+		{
+			"name": "windows-x64",
+			"inherits": "base",
+			"architecture": { "value": "x64" },
+			"cacheVariables": {
+				"VCPKG_TARGET_TRIPLET": "x64-windows"
+			}
+		},
+		
+		{
+		  "name": "linux-x64",
+		  "inherits": "base",
+		  "generator": "Ninja",
+		  "cacheVariables": {
+			"VCPKG_TARGET_TRIPLET": "x64-linux"
+		  }
+		}
+	],
+
+	"buildPresets": [
+		{ "name": "windows-x64", "configurePreset": "windows-x64" },
+		{ "name": "linux-x64", "configurePreset": "linux-x64" }
+	]
+}
