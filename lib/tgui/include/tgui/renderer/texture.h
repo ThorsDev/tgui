@@ -11,7 +11,11 @@ namespace tgui
 		{
 			Default = (1 << 0),
 			RenderTarget = (1 << 1),
-			SRGB = (1 << 2)
+			SRGB = (1 << 2),
+			MSAA_2X = (1 << 3),
+			MSAA_4X = (1 << 4),
+			MSAA_8X = (1 << 5),
+			BlitDst = (1 << 6),
 		};
 	};
 
@@ -33,6 +37,7 @@ namespace tgui
 			D24S8,
 			D32,
 			D16F,
+			D24F,
 			D32F,
 			D0S8
 		};
@@ -55,21 +60,9 @@ namespace tgui
 	class texture : public reference_object
 	{
 	public:
-		texture(const texture_properties& props) 
-			: m_properties(props) 
-		{
-			create();
-		}
-
-		texture(const void* data, size_t size)
-		{
-			create_from_memory(data, size);
-		}
-
-		~texture()
-		{
-			destroy();
-		}
+		texture() = default;
+		texture(const texture_properties& props) : m_properties(props) {}
+		virtual ~texture() = default;
 
 	public:
 		virtual bool is_valid() const = 0;

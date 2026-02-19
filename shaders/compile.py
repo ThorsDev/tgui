@@ -9,6 +9,8 @@ BIN2C_ENABLED = True
 
 SHADERS = [
 	"quad",
+	"quad_image",
+	"fullscreen",
 ]
 
 PROFILES = [

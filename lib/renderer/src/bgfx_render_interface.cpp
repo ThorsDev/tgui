@@ -2,14 +2,36 @@
 #include "tgui/platform/application.h"
 #include "tgui/math/math.h"
 
+#include "tgui/renderer/bgfx_texture.h"
+
 #include "embedded_shaders/quad_vs.bin.h"
 #include "embedded_shaders/quad_fs.bin.h"
+#include "embedded_shaders/quad_image_vs.bin.h"
+#include "embedded_shaders/quad_image_fs.bin.h"
+#include "embedded_shaders/fullscreen_vs.bin.h"
+#include "embedded_shaders/fullscreen_fs.bin.h"
 
 
 static const bgfx::EmbeddedShader s_embeddedQuadShaders[] =
 {
 	BGFX_EMBEDDED_SHADER(quad_vs),
 	BGFX_EMBEDDED_SHADER(quad_fs),
+
+	BGFX_EMBEDDED_SHADER_END()
+};
+
+static const bgfx::EmbeddedShader s_embeddedQuadImageShaders[] =
+{
+	BGFX_EMBEDDED_SHADER(quad_image_vs),
+	BGFX_EMBEDDED_SHADER(quad_image_fs),
+
+	BGFX_EMBEDDED_SHADER_END()
+};
+
+static const bgfx::EmbeddedShader s_embeddedFullscreenShaders[] =
+{
+	BGFX_EMBEDDED_SHADER(fullscreen_vs),
+	BGFX_EMBEDDED_SHADER(fullscreen_fs),
 
 	BGFX_EMBEDDED_SHADER_END()
 };
@@ -23,7 +45,6 @@ namespace tgui::renderer
 			return false;
 
 		auto const size = window->get_size();
-
 
 		bgfx::PlatformData pd;
 		memset(&pd, 0, sizeof(pd));
@@ -41,21 +62,54 @@ namespace tgui::renderer
 			return false;
 
 		m_quad_shader = tgui::ref<bgfx_embedded_shader>::create(embedded_shader_properties{ "quad_vs", "quad_fs" }, s_embeddedQuadShaders);
+		m_quad_image_shader = tgui::ref<bgfx_embedded_shader>::create(embedded_shader_properties{ "quad_image_vs", "quad_image_fs" }, s_embeddedQuadImageShaders);
+		m_fullscreen_shader = tgui::ref<bgfx_embedded_shader>::create(embedded_shader_properties{ "fullscreen_vs", "fullscreen_fs" }, s_embeddedFullscreenShaders);
 
 		glm::mat4 view(1.0f);
 		glm::mat4 proj = glm::ortho(0.0f, static_cast<float>(size.width), static_cast<float>(size.height), 0.0f, -10000.0f, 1000.0f);
 
+		framebuffer_properties fbProps;
+		fbProps.size = size;
+		fbProps.attachments = {
+			{ texture_format::RGBA, texture_usage::RenderTarget | texture_usage::MSAA_8X, nullptr },
+		};
+
+		m_frame_buffer = ref<bgfx_frame_buffer>::create(fbProps);
+
 		bgfx::resetView(0);
 		bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 1.0f, 0, 0x000000ff);
 		bgfx::setViewTransform(0, glm::value_ptr(view), glm::value_ptr(proj));
+		bgfx::setViewFrameBuffer(0, m_frame_buffer->handle());
 		bgfx::setViewRect(0, 0, 0, size.width, size.height);
+
+		bgfx::resetView(1);
+		bgfx::setViewClear(1, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 1.0f, 0, 0x000000ff);
+		bgfx::setViewRect(1, 0, 0, size.width, size.height);
+
+		bgfx::resetView(2);
+		bgfx::setViewClear(2, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 1.0f, 0, 0x000000ff);
+		bgfx::setViewRect(2, 0, 0, size.width, size.height);
 
 		m_quad_vertex_layout.begin()
 			.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
 			.end();
 
+		m_quad_image_vertex_layout.begin()
+			.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+			.end();
+
 		m_quad_vertex_buffer.init(1024 * 4);
+
+		m_quad_image_uniform = bgfx::createUniform("s_diffuseTexture", bgfx::UniformType::Sampler);
+
+		texture_properties texProps;
+		texProps.size = size;
+		texProps.format = texture_format::RGBA;
+		texProps.usage = texture_usage::RenderTarget | texture_usage::BlitDst;
+		m_resolve_texture = ref<bgfx_texture>::create(texProps)->as<bgfx_texture>();
 
 		return true;
 	}
@@ -63,12 +117,16 @@ namespace tgui::renderer
 	void bgfx_render_interface::shutdown()
 	{
 		m_quad_shader.reset();
+		m_frame_buffer.reset();
+
 		bgfx::shutdown();
 	}
 
 	void bgfx_render_interface::frame()
 	{
 		bgfx::touch(0);
+		bgfx::touch(1);
+		bgfx::touch(2);
 
 		size_t quad_count = m_quad_vertex_buffer.size() / 4;
 		size_t index_count = quad_count * 6;
@@ -100,6 +158,10 @@ namespace tgui::renderer
 		bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 		bgfx::submit(0, m_quad_shader->handle());
 
+		bgfx::blit(1, m_resolve_texture->as<bgfx_texture>()->handle(), 0, 0, m_frame_buffer->get_color_attachment(0)->as<bgfx_texture>()->handle());
+
+		render_fullscreen_quad(2, m_resolve_texture.get());
+
 		bgfx::frame();
 		m_quad_vertex_buffer.advance();
 	}
@@ -109,9 +171,19 @@ namespace tgui::renderer
 		glm::mat4 view(1.0f);
 		glm::mat4 proj = glm::ortho(0.0f, static_cast<float>(new_size.width), static_cast<float>(new_size.height), 0.0f, -1.0f, 1.0f);
 
+		m_frame_buffer->resize(new_size);
+		m_resolve_texture->resize(new_size);
+
 		bgfx::reset(new_size.width, new_size.height, BGFX_RESET_NONE);
 		bgfx::setViewTransform(0, glm::value_ptr(view), glm::value_ptr(proj));
 		bgfx::setViewRect(0, 0, 0, new_size.width, new_size.height);
+		bgfx::setViewFrameBuffer(0, m_frame_buffer->handle());
+
+		bgfx::setViewClear(1, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 1.0f, 0, 0x000000ff);
+		bgfx::setViewRect(1, 0, 0, new_size.width, new_size.height);
+
+		bgfx::setViewClear(2, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 1.0f, 0, 0x000000ff);
+		bgfx::setViewRect(2, 0, 0, new_size.width, new_size.height);
 	}
 
 	void bgfx_render_interface::draw_quad(const glm::vec2& pos, const glm::vec2& size, const color& color)
@@ -152,5 +224,32 @@ namespace tgui::renderer
 
 		vertices->position = pos + glm::vec2(0.0f, size.y) + corners[3];
 		vertices->color = color.bgra();
+	}
+
+	void bgfx_render_interface::render_fullscreen_quad(bgfx::ViewId id, texture* tex)
+	{
+		std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0 };
+		quad_image_vertex vertices[4] = {
+			{ { -1.0f,  1.0f }, { 0.0f, 0.0f }, 0xffffffff },
+			{ {  1.0f,  1.0f }, { 1.0f, 0.0f }, 0xffffffff },
+			{ {  1.0f, -1.0f }, { 1.0f, 1.0f }, 0xffffffff },
+			{ { -1.0f, -1.0f }, { 0.0f, 1.0f }, 0xffffffff }
+		};
+
+		bgfx::TransientIndexBuffer tib;
+		bgfx::TransientVertexBuffer tvb;
+
+		bgfx::allocTransientIndexBuffer(&tib, 6, false);
+		bgfx::allocTransientVertexBuffer(&tvb, 4, m_quad_image_vertex_layout);
+
+		std::memcpy(tvb.data, vertices, sizeof(vertices));
+		std::memcpy(tib.data, indices.data(), sizeof(uint16_t) * indices.size());
+
+		bgfx::setVertexBuffer(0, &tvb);
+		bgfx::setIndexBuffer(&tib);
+
+		bgfx::setTexture(0, m_quad_image_uniform, tex->as<bgfx_texture>()->handle());
+		bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
+		bgfx::submit(id, m_fullscreen_shader->handle());
 	}
 }

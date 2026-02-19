@@ -24,6 +24,8 @@ namespace tgui::renderer
 			return bgfx::TextureFormat::D32;
 		case texture_format::D16F:
 			return bgfx::TextureFormat::D16F;
+		case texture_format::D24F:
+			return bgfx::TextureFormat::D24F;
 		case texture_format::D32F:
 			return bgfx::TextureFormat::D32F;
 		case texture_format::D0S8:
@@ -36,19 +38,34 @@ namespace tgui::renderer
 	static void parse_usage_flags(uint64_t usage, uint64_t& out_flags)
 	{
 		if (usage & texture_usage::RenderTarget)
-			out_flags |= BGFX_TEXTURE_RT;
+		{
+			if (usage & texture_usage::MSAA_8X)
+				out_flags |= BGFX_TEXTURE_RT_MSAA_X8;
+			else if (usage & texture_usage::MSAA_4X)
+				out_flags |= BGFX_TEXTURE_RT_MSAA_X4;
+			else if (usage & texture_usage::MSAA_2X)
+				out_flags |= BGFX_TEXTURE_RT_MSAA_X2;
+			else
+				out_flags |= BGFX_TEXTURE_RT;
+		}
 
 		if (usage & texture_usage::SRGB)
 			out_flags |= BGFX_TEXTURE_SRGB;
+
+		if (usage & texture_usage::BlitDst)
+			out_flags |= BGFX_TEXTURE_BLIT_DST;
 	}
 
 	bgfx_texture::bgfx_texture(const texture_properties& props)
 		: texture(props)
-	{}
+	{
+		create();
+	}
 
 	bgfx_texture::bgfx_texture(const void* data, size_t size)
-		: texture(data, size)
-	{}
+	{
+		create_from_memory(data, size);
+	}
 
 	bgfx_texture::~bgfx_texture()
 	{}
