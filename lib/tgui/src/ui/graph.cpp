@@ -31,12 +31,14 @@ namespace tgui
 		const auto& transform = get_component<transform_component>();
 		const auto& graph_data = get_component<graph_component>();
 
-		static_renderer::draw_graph(transform.position, transform.size, get_corners());
+		static_renderer::draw_graph(transform.position, transform.size, get_corners(), m_color);
 	}
 
 	void graph::continue_init()
 	{
 		add_component<render_component>(this);
 		add_component<graph_component>();
+
+		m_color = color(0xffffffff);
 	}
 }

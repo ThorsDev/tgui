@@ -46,6 +46,7 @@ protected:
 
 		testGraph->corner(0) = { -10.0f, -20.0f };
 		testGraph->corner(3) = { -10.0f, 20.0f };
+		testGraph->set_color(tgui::color(0.0f, 1.0f, 0.0f, 1.0f));
 
 		tgui::static_renderer::init(m_render_interface->as<tgui::render_interface>());
 	}

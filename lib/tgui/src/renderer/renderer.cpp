@@ -19,15 +19,15 @@ namespace tgui
 		}
 	}
 
-	void static_renderer::draw_quad(const glm::vec2& pos, const glm::vec2& size)
+	void static_renderer::draw_quad(const glm::vec2& pos, const glm::vec2& size, const color& color)
 	{
 		TGUI_ASSERT(ms_render_interface, "render interface is not defined, maybe init is not called.");
-		ms_render_interface->draw_quad(pos, size);
+		ms_render_interface->draw_quad(pos, size, color);
 	}
 
-	void static_renderer::draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners)
+	void static_renderer::draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners, const color& color)
 	{
 		TGUI_ASSERT(ms_render_interface, "render interface is not defined, maybe init is not called.");
-		ms_render_interface->draw_graph(pos, size, corners);
+		ms_render_interface->draw_graph(pos, size, corners, color);
 	}
 }

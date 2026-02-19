@@ -4,6 +4,7 @@
 #include <tgui/core/handle.h>
 
 #include <tgui/math/math.h>
+#include <tgui/math/color.h>
 
 namespace tgui
 {

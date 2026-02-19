@@ -20,8 +20,8 @@ namespace tgui::renderer
 		virtual void frame() override;
 		virtual void resize(const pixel_size& new_size) override;
 
-		virtual void draw_quad(const glm::vec2& pos, const glm::vec2& size) override;
-		virtual void draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners) override;
+		virtual void draw_quad(const glm::vec2& pos, const glm::vec2& size, const color& color) override;
+		virtual void draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners, const color& color) override;
 	
 	private:
 		tgui::ref<bgfx_embedded_shader> m_quad_shader = nullptr;

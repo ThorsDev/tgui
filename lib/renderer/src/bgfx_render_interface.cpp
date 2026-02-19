@@ -114,43 +114,43 @@ namespace tgui::renderer
 		bgfx::setViewRect(0, 0, 0, new_size.width, new_size.height);
 	}
 
-	void bgfx_render_interface::draw_quad(const glm::vec2& pos, const glm::vec2& size)
+	void bgfx_render_interface::draw_quad(const glm::vec2& pos, const glm::vec2& size, const color& color)
 	{
 		quad_vertex* vertices = m_quad_vertex_buffer.alloc(4);
 
 		vertices->position = pos;
-		vertices->color = 0xffff0000;
+		vertices->color = color.bgra();
 		vertices++;
 
 		vertices->position = pos + glm::vec2(size.x, 0.0f);
-		vertices->color = 0xff00ff00;
+		vertices->color = color.bgra();
 		vertices++;
 
 		vertices->position = pos + size;
-		vertices->color = 0xff0000ff;
+		vertices->color = color.bgra();
 		vertices++;
 
 		vertices->position = pos + glm::vec2(0.0f, size.y);
-		vertices->color = 0xffffff00;
+		vertices->color = color.bgra();
 	}
 
-	void bgfx_render_interface::draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners)
+	void bgfx_render_interface::draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners, const color& color)
 	{
 		quad_vertex* vertices = m_quad_vertex_buffer.alloc(4);
 
 		vertices->position = pos + corners[0];
-		vertices->color = 0xffff0000;
+		vertices->color = color.bgra();
 		vertices++;
 
 		vertices->position = pos + glm::vec2(size.x, 0.0f) + corners[1];
-		vertices->color = 0xff00ff00;
+		vertices->color = color.bgra();
 		vertices++;
 
 		vertices->position = pos + size + corners[2];
-		vertices->color = 0xff0000ff;
+		vertices->color = color.bgra();
 		vertices++;
 
 		vertices->position = pos + glm::vec2(0.0f, size.y) + corners[3];
-		vertices->color = 0xffffff00;
+		vertices->color = color.bgra();
 	}
 }
