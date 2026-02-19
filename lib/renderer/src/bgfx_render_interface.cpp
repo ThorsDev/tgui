@@ -3,6 +3,8 @@
 #include "tgui/math/math.h"
 
 #include "tgui/renderer/bgfx_texture.h"
+#include "tgui/renderer/bgfx_index_buffer.h"
+#include "tgui/renderer/bgfx_vertex_buffer.h"
 
 #include "embedded_shaders/quad_vs.bin.h"
 #include "embedded_shaders/quad_fs.bin.h"
@@ -10,7 +12,6 @@
 #include "embedded_shaders/quad_image_fs.bin.h"
 #include "embedded_shaders/fullscreen_vs.bin.h"
 #include "embedded_shaders/fullscreen_fs.bin.h"
-
 
 static const bgfx::EmbeddedShader s_embeddedQuadShaders[] =
 {
@@ -101,7 +102,7 @@ namespace tgui::renderer
 			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
 			.end();
 
-		m_quad_vertex_buffer.init(1024 * 4);
+		m_quad_vertex_buffer_data.init(1024 * 4);
 
 		m_quad_image_uniform = bgfx::createUniform("s_diffuseTexture", bgfx::UniformType::Sampler);
 
@@ -110,6 +111,31 @@ namespace tgui::renderer
 		texProps.format = texture_format::RGBA;
 		texProps.usage = texture_usage::RenderTarget | texture_usage::BlitDst;
 		m_resolve_texture = ref<bgfx_texture>::create(texProps)->as<bgfx_texture>();
+
+		constexpr uint32_t quad_count = 5000;
+		std::vector<uint32_t> indices(quad_count * 6);
+
+		uint32_t offset = 0;
+		for (int i = 0; i < quad_count * 6; i += 6)
+		{
+			indices[i + 0] = offset + 0;
+			indices[i + 1] = offset + 1;
+			indices[i + 2] = offset + 2;
+			indices[i + 3] = offset + 2;
+			indices[i + 4] = offset + 3;
+			indices[i + 5] = offset + 0;
+
+			offset += 4;
+		}
+
+		m_quad_index_buffer = new bgfx_index_buffer(span::create(indices));
+		m_quad_index_buffer->retain();
+
+		auto vtxBuf = new bgfx_dynamic_vertex_buffer(quad_count);
+		vtxBuf->set_layout(m_quad_vertex_layout);
+
+		m_quad_vertex_buffer = vtxBuf;
+		m_quad_vertex_buffer->retain();
 
 		return true;
 	}
@@ -128,34 +154,14 @@ namespace tgui::renderer
 		bgfx::touch(1);
 		bgfx::touch(2);
 
-		size_t quad_count = m_quad_vertex_buffer.size() / 4;
+		size_t quad_count = m_quad_vertex_buffer_data.size() / 4;
 		size_t index_count = quad_count * 6;
-		std::vector<uint16_t> indices(index_count);
 
-		uint32_t offset = 0;
-		for (uint32_t i = 0; i < index_count; i += 6)
-		{
-			indices[i + 0] = offset + 0;
-			indices[i + 1] = offset + 1;
-			indices[i + 2] = offset + 2;
-			indices[i + 3] = offset + 2;
-			indices[i + 4] = offset + 3;
-			indices[i + 5] = offset + 0;
-			offset += 4;
-		}
+		m_quad_vertex_buffer->set_data(span::create(m_quad_vertex_buffer_data.data(), sizeof(quad_vertex) * quad_count * 4), 0, false);
 
-		bgfx::TransientIndexBuffer tib;
-		bgfx::TransientVertexBuffer tvb;
-
-		bgfx::allocTransientIndexBuffer(&tib, quad_count * 6, false);
-		bgfx::allocTransientVertexBuffer(&tvb, quad_count * 4, m_quad_vertex_layout);
-
-		std::memcpy(tvb.data, m_quad_vertex_buffer.data(), sizeof(quad_vertex) * quad_count * 4);
-		std::memcpy(tib.data, indices.data(), sizeof(uint16_t) * indices.size());
-
-		bgfx::setVertexBuffer(0, &tvb);
-		bgfx::setIndexBuffer(&tib);
-		bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
+		bgfx::setVertexBuffer(0, m_quad_vertex_buffer->as<bgfx_dynamic_vertex_buffer>()->handle());
+		bgfx::setIndexBuffer(m_quad_index_buffer->as<bgfx_index_buffer>()->handle());
+		bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_MSAA);
 		bgfx::submit(0, m_quad_shader->handle());
 
 		bgfx::blit(1, m_resolve_texture->as<bgfx_texture>()->handle(), 0, 0, m_frame_buffer->get_color_attachment(0)->as<bgfx_texture>()->handle());
@@ -163,7 +169,7 @@ namespace tgui::renderer
 		render_fullscreen_quad(2, m_resolve_texture.get());
 
 		bgfx::frame();
-		m_quad_vertex_buffer.advance();
+		m_quad_vertex_buffer_data.advance();
 	}
 
 	void bgfx_render_interface::resize(const pixel_size& new_size)
@@ -188,7 +194,7 @@ namespace tgui::renderer
 
 	void bgfx_render_interface::draw_quad(const glm::vec2& pos, const glm::vec2& size, const color& color)
 	{
-		quad_vertex* vertices = m_quad_vertex_buffer.alloc(4);
+		quad_vertex* vertices = m_quad_vertex_buffer_data.alloc(4);
 
 		vertices->position = pos;
 		vertices->color = color.bgra();
@@ -208,7 +214,7 @@ namespace tgui::renderer
 
 	void bgfx_render_interface::draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners, const color& color)
 	{
-		quad_vertex* vertices = m_quad_vertex_buffer.alloc(4);
+		quad_vertex* vertices = m_quad_vertex_buffer_data.alloc(4);
 
 		vertices->position = pos + corners[0];
 		vertices->color = color.bgra();
