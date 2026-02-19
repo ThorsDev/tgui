@@ -12,6 +12,7 @@ namespace tgui
 		vertex_buffer(span data) : m_data(data) {}
 		virtual ~vertex_buffer() = default;
 
+		virtual bool is_dynamic() const = 0;
 		virtual void set_data(span data, uint32_t startVertex, bool copy) = 0;
 		virtual bool is_valid() const = 0;
 

@@ -64,6 +64,9 @@ namespace tgui
 		texture(const texture_properties& props) : m_properties(props) {}
 		virtual ~texture() = default;
 
+		uint32_t get_width() const { return m_properties.size.width; }
+		uint32_t get_height() const { return m_properties.size.height; }
+
 	public:
 		virtual bool is_valid() const = 0;
 		virtual void resize(const pixel_size& new_size) = 0;

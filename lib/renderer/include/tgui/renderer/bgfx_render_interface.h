@@ -19,33 +19,24 @@ namespace tgui::renderer
 		bgfx_render_interface() = default;
 		virtual ~bgfx_render_interface() = default;
 
-		virtual bool init() override;
-		virtual void shutdown() override;
-		virtual void frame() override;
-		virtual void resize(const pixel_size& new_size) override;
-
-		virtual void draw_quad(const glm::vec2& pos, const glm::vec2& size, const color& color) override;
-		virtual void draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners, const color& color) override;
+		virtual void draw(const draw_properties& properties) override;
+		virtual void resolve(texture* target, framebuffer* source) override;
 	
+		virtual uint16_t get_pass_index() override;
+		virtual void next_pass(framebuffer* fb = nullptr) override;
+
 	protected:
-		void render_fullscreen_quad(bgfx::ViewId id, texture* tex);
+		virtual bool on_init() override;
+		virtual void on_shutdown() override;
+		virtual void on_resize(const pixel_size& new_size) override;
+		virtual void on_frame() override;
 
 	private:
-		tgui::ref<bgfx_embedded_shader> m_quad_shader = nullptr;
-		tgui::ref<bgfx_embedded_shader> m_quad_image_shader = nullptr;
-		tgui::ref<bgfx_embedded_shader> m_fullscreen_shader = nullptr;
-
-		index_buffer* m_quad_index_buffer = nullptr;
-		vertex_buffer* m_quad_vertex_buffer = nullptr;
-
 		bgfx::UniformHandle m_quad_image_uniform = BGFX_INVALID_HANDLE;
-
-		tgui::ref<bgfx_frame_buffer> m_frame_buffer = nullptr;
-		tgui::ref<texture> m_resolve_texture = nullptr;
 
 		bgfx::VertexLayout m_quad_vertex_layout;
 		bgfx::VertexLayout m_quad_image_vertex_layout;
 
-		rotating_buffer<quad_vertex> m_quad_vertex_buffer_data;
+		int16_t m_pass_index = -1;
 	};
 }

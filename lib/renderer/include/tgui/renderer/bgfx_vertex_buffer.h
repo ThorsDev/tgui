@@ -12,6 +12,8 @@ namespace tgui::renderer
 		bgfx_vertex_buffer_base(span data) : vertex_buffer(data) {}
 		virtual ~bgfx_vertex_buffer_base() = default;
 
+		virtual bool is_dynamic() const { return false; }
+
 		void set_layout(const bgfx::VertexLayout layout) 
 		{ 
 			m_bgfx_layout = layout; 
@@ -31,6 +33,7 @@ namespace tgui::renderer
 		bgfx_vertex_buffer(span data);
 		virtual ~bgfx_vertex_buffer();
 
+		virtual bool is_dynamic() const override { return false; }
 		virtual bool is_valid() const override;
 		virtual void set_data(span data, uint32_t, bool) override;
 
@@ -54,6 +57,7 @@ namespace tgui::renderer
 		bgfx_dynamic_vertex_buffer(span data);
 		virtual ~bgfx_dynamic_vertex_buffer();
 
+		virtual bool is_dynamic() const override { return true; }
 		virtual bool is_valid() const override;
 		virtual void set_data(span data, uint32_t startVertex, bool copy) override;
 

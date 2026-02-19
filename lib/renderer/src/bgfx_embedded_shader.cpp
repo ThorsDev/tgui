@@ -1,6 +1,6 @@
 #include "tgui/renderer/bgfx_embedded_shader.h"
 
-namespace tgui
+namespace tgui::renderer
 {
 	bgfx_embedded_shader::bgfx_embedded_shader(const embedded_shader_properties& props, const bgfx::EmbeddedShader* emb_shader)
 	{
@@ -16,14 +16,4 @@ namespace tgui
 	{
 	}
 
-	bool bgfx_embedded_shader::is_valid() const
-	{
-		return bgfx::isValid(m_program_handle);
-	}
-
-	void bgfx_embedded_shader::destroy()
-	{
-		if (is_valid())
-			bgfx::destroy(m_program_handle);
-	}
 }

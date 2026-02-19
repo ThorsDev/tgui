@@ -102,6 +102,8 @@ namespace tgui::renderer
 			if (attachment)
 				attachment->release();
 
+		m_color_attachments.clear();
+
 		if (m_depth_attachment)
 		{
 			m_depth_attachment->release();
