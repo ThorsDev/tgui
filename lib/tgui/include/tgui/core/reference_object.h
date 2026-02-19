@@ -25,7 +25,7 @@ namespace tgui
 		}
 
 		template<typename TOther>
-		TOther* as() const noexcept
+		TOther* as() noexcept
 		{
 			return static_cast<TOther*>(this);
 		}

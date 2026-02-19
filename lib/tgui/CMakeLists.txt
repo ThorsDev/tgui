@@ -65,9 +65,10 @@ add_library(tgui::tgui ALIAS tgui)
 target_include_directories(tgui
 	PUBLIC
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/include>
+
 		$<INSTALL_INTERFACE:include>
-	PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/vendor/include
+		$<INSTALL_INTERFACE:include/vendor>
 )
 
 target_link_libraries(tgui

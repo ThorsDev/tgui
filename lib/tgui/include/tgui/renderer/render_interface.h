@@ -8,6 +8,9 @@
 
 #include "tgui/core/reference_object.h"
 
+#include "tgui/renderer/draw_commands.h"
+#include "tgui/math/math.h"
+
 namespace tgui
 {
 	class render_interface : public reference_object
@@ -20,6 +23,7 @@ namespace tgui
 		virtual void frame() = 0;
 		virtual void resize(const pixel_size& new_size) = 0;
 
-		virtual void draw_quad(const pixel_position& pos, const pixel_size& size) = 0;
+		virtual void draw_quad(const glm::vec2& pos, const glm::vec2& size) = 0;
+		virtual void draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners) = 0;
 	};
 }

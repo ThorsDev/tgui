@@ -3,6 +3,8 @@
 #include "tgui/renderer/render_interface.h"
 
 #include "tgui/core/reference.h"
+#include "tgui/core/rotating_buffer.h"
+
 #include "tgui/renderer/bgfx_embedded_shader.h"
 
 namespace tgui::renderer
@@ -18,12 +20,14 @@ namespace tgui::renderer
 		virtual void frame() override;
 		virtual void resize(const pixel_size& new_size) override;
 
-		virtual void draw_quad(const pixel_position& pos, const pixel_size& size) override;
+		virtual void draw_quad(const glm::vec2& pos, const glm::vec2& size) override;
+		virtual void draw_graph(const glm::vec2& pos, const glm::vec2& size, const std::array<glm::vec2, 4>& corners) override;
 	
 	private:
 		tgui::ref<bgfx_embedded_shader> m_quad_shader = nullptr;
 
 		bgfx::VertexLayout m_quad_vertex_layout;
-		std::vector<std::pair<pixel_position, pixel_size>> m_quads;
+
+		rotating_buffer<quad_vertex> m_quad_vertex_buffer;
 	};
 }
